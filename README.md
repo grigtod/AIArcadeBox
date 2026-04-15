@@ -10,7 +10,7 @@ Local web app that:
 - loads the returned single-file game directly in the browser
 - can also run as a static GitHub Pages site for replaying saved games from the library
 
-Try it without AI game generation on GitHub Pages: [AI Arcade demo](https://grigtod.github.io/AI-Arcade/)
+Try it without AI game generation on GitHub Pages: [AI Arcade demo](https://grigtod.github.io/AIArcade/)
 
 This browser demo is for playing saved games only and does not include the AI game generation flow.
 
