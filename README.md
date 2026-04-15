@@ -1,4 +1,4 @@
-![AI Arcade Box header](./public/media/readme-header.jpg)
+![AI Arcade header](./public/media/readme-header.jpg)
 
 # AI Arcade
 
@@ -10,7 +10,7 @@ Local web app that:
 - loads the returned single-file game directly in the browser
 - can also run as a static GitHub Pages site for replaying saved games from the library
 
-Try it without AI game generation on GitHub Pages: [AI Arcade Box demo](https://grigtod.github.io/AIArcadeBox/)
+Try it without AI game generation on GitHub Pages: [AI Arcade demo](https://grigtod.github.io/AI-Arcade/)
 
 This browser demo is for playing saved games only and does not include the AI game generation flow.
 
@@ -56,7 +56,7 @@ npm start
 
 - The repo root now includes a static `index.html` entry point so GitHub Pages can serve the saved library without the local Node server.
 - On GitHub Pages, game generation is disabled unless the app can reach a local API with an `OPENAI_API_KEY`, but saved games in `data/library/` remain playable in the browser.
-- GitHub Pages demo: [AI Arcade Box on GitHub Pages](https://grigtod.github.io/AIArcadeBox/)
+- GitHub Pages demo: [AI Arcade on GitHub Pages](https://grigtod.github.io/AI-Arcade/)
 
 ## Contributing
 
