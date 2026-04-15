@@ -85,6 +85,7 @@ const state = {
   runtime: {
     apiReachable: false,
     generationAvailable: null,
+    fullscreenPromptHandled: false,
   },
 };
 
@@ -103,22 +104,17 @@ const trackedDirectionCodes = new Set([
   'ShiftRight',
   'Escape',
 ]);
-const trackedMouseButtons = new Set([0, 2]);
 const localBindings = {
   keys: new Set(),
-  mouseButtons: new Set(),
 };
 
 window.addEventListener('gamepadconnected', () => markDirty());
 window.addEventListener('gamepaddisconnected', () => markDirty());
+window.addEventListener('fullscreenchange', handleFullscreenStateChange);
 window.addEventListener('message', handleWindowMessage);
+app?.addEventListener('click', handleAppClick);
 window.addEventListener('keydown', handleTrackedKeyDown, { capture: true });
 window.addEventListener('keyup', handleTrackedKeyUp, { capture: true });
-window.addEventListener('mousedown', handleTrackedMouseDown, { capture: true });
-window.addEventListener('mouseup', handleTrackedMouseUp, { capture: true });
-window.addEventListener('click', handleTrackedMouseClick, { capture: true });
-window.addEventListener('auxclick', handleTrackedAuxClick, { capture: true });
-window.addEventListener('contextmenu', handleTrackedContextMenu, { capture: true });
 window.addEventListener('blur', clearLocalBindings);
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
@@ -341,11 +337,8 @@ function readLocalBindings() {
   next.down = localBindings.keys.has('ArrowDown') || localBindings.keys.has('KeyS');
   next.left = localBindings.keys.has('ArrowLeft') || localBindings.keys.has('KeyA');
   next.right = localBindings.keys.has('ArrowRight') || localBindings.keys.has('KeyD');
-  next.button1 = localBindings.mouseButtons.has(0) || localBindings.keys.has('Enter');
-  next.button2 =
-    localBindings.mouseButtons.has(2) ||
-    localBindings.keys.has('ShiftLeft') ||
-    localBindings.keys.has('ShiftRight');
+  next.button1 = localBindings.keys.has('Enter');
+  next.button2 = localBindings.keys.has('ShiftLeft') || localBindings.keys.has('ShiftRight');
   next.escape = localBindings.keys.has('Escape');
   return next;
 }
@@ -371,6 +364,8 @@ function mergeInputStates(...sources) {
 }
 
 function handleTrackedKeyDown(event) {
+  maybeOfferFullscreenFromGesture('keyboard', event);
+
   if (!shouldTrackDirectionKey(event)) {
     return;
   }
@@ -386,40 +381,6 @@ function handleTrackedKeyUp(event) {
 
   event.preventDefault();
   setTrackedKey(event.code, false);
-}
-
-function handleTrackedMouseDown(event) {
-  if (!trackedMouseButtons.has(event.button)) {
-    return;
-  }
-
-  event.preventDefault();
-  setTrackedMouseButton(event.button, true);
-}
-
-function handleTrackedMouseUp(event) {
-  if (!trackedMouseButtons.has(event.button)) {
-    return;
-  }
-
-  event.preventDefault();
-  setTrackedMouseButton(event.button, false);
-}
-
-function handleTrackedMouseClick(event) {
-  if (event.button === 0) {
-    event.preventDefault();
-  }
-}
-
-function handleTrackedAuxClick(event) {
-  if (trackedMouseButtons.has(event.button)) {
-    event.preventDefault();
-  }
-}
-
-function handleTrackedContextMenu(event) {
-  event.preventDefault();
 }
 
 function shouldTrackDirectionKey(event) {
@@ -454,22 +415,8 @@ function setTrackedKey(code, isDown) {
   localBindings.keys.delete(code);
 }
 
-function setTrackedMouseButton(button, isDown) {
-  if (isDown) {
-    if (localBindings.mouseButtons.has(button)) {
-      return;
-    }
-
-    localBindings.mouseButtons.add(button);
-    return;
-  }
-
-  localBindings.mouseButtons.delete(button);
-}
-
 function clearLocalBindings() {
   localBindings.keys.clear();
-  localBindings.mouseButtons.clear();
 }
 
 function sanitizeFrameInput(source) {
@@ -2032,6 +1979,83 @@ function renderHome() {
       </aside>
     </div>
   `;
+}
+
+function handleFullscreenStateChange() {
+  if (document.fullscreenElement) {
+    state.runtime.fullscreenPromptHandled = true;
+  }
+  markDirty();
+}
+
+function isFullscreenSupported() {
+  return Boolean(document.fullscreenEnabled && document.documentElement?.requestFullscreen);
+}
+
+function isStaticPagesMode() {
+  return state.runtime.apiReachable === false;
+}
+
+function shouldShowFullscreenPrompt() {
+  return (
+    state.phase === 'home' &&
+    isStaticPagesMode() &&
+    isFullscreenSupported() &&
+    !document.fullscreenElement &&
+    !state.runtime.fullscreenPromptHandled
+  );
+}
+
+function dismissFullscreenPrompt() {
+  if (state.runtime.fullscreenPromptHandled) {
+    return;
+  }
+
+  state.runtime.fullscreenPromptHandled = true;
+  markDirty();
+}
+
+async function requestAppFullscreen() {
+  if (!isFullscreenSupported() || document.fullscreenElement) {
+    dismissFullscreenPrompt();
+    return;
+  }
+
+  try {
+    await document.documentElement.requestFullscreen();
+    state.runtime.fullscreenPromptHandled = true;
+  } catch {}
+
+  markDirty();
+}
+
+function handleAppClick(event) {
+  maybeOfferFullscreenFromGesture('pointer', event);
+}
+
+function maybeOfferFullscreenFromGesture(source, event) {
+  if (!shouldShowFullscreenPrompt()) {
+    return;
+  }
+
+  if (source === 'keyboard') {
+    const code = event?.code || '';
+    if (code !== 'Enter' && code !== 'NumpadEnter') {
+      return;
+    }
+  }
+
+  state.runtime.fullscreenPromptHandled = true;
+  const enableFullscreen = window.confirm(
+    'Enable fullscreen for a better AI Arcade experience on GitHub Pages?',
+  );
+
+  if (enableFullscreen) {
+    void requestAppFullscreen();
+    return;
+  }
+
+  markDirty();
 }
 
 function drawHomeVideoShader() {
