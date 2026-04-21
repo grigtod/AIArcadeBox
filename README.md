@@ -2,6 +2,9 @@
 
 # AI Arcade
 
+Video: [link](https://youtu.be/POufp6P4Ed4)  
+Photos: [link](https://drive.google.com/drive/folders/1iC8ZH85nRKsdP7ZhC_Qw-DQV113_aRHK)  
+
 Local web app that:
 
 - is designed for a joystick controller with two buttons, while also supporting keyboard fallback controls
