@@ -1,4 +1,4 @@
-![AI Arcade header](./public/media/readme-header.jpg)
+![AI Arcade header](./public/media/readme-header-anim.gif)
 
 # AI Arcade
 
